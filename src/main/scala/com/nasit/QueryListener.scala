@@ -11,7 +11,7 @@ import scala.collection.mutable
 
 class QueryListener extends QueryExecutionListener {
 
-  def getInputColumns(expr: Expression): mutable.Set[String] = {
+  def getRootColumns(expr: Expression): mutable.Set[String] = {
     val inputColumns = mutable.Set[String]()
 
     expr match {
@@ -20,23 +20,23 @@ class QueryListener extends QueryExecutionListener {
 
       case alias: Alias =>
         inputColumns += alias.toString()
-        inputColumns ++= getInputColumns(alias.child)
+        inputColumns ++= getRootColumns(alias.child)
 
       case concat: Concat =>
-        concat.children.map(getInputColumns).foreach(e => inputColumns ++= e)
+        concat.children.map(getRootColumns).foreach(e => inputColumns ++= e)
 
       case aggregate: AggregateExpression =>
-        aggregate.children.map(getInputColumns).foreach(e => inputColumns ++= e)
+        aggregate.children.map(getRootColumns).foreach(e => inputColumns ++= e)
 
       case avg: Average =>
-        inputColumns ++= getInputColumns(avg.child)
+        inputColumns ++= getRootColumns(avg.child)
 
       case unaryExpr: UnaryExpression =>
-        inputColumns ++= getInputColumns(unaryExpr.child)
+        inputColumns ++= getRootColumns(unaryExpr.child)
 
       case binaryExpr: BinaryExpression =>
-        inputColumns ++= getInputColumns(binaryExpr.left)
-        inputColumns ++= getInputColumns(binaryExpr.right)
+        inputColumns ++= getRootColumns(binaryExpr.left)
+        inputColumns ++= getRootColumns(binaryExpr.right)
 
       case _ => println(expr.getClass)
     }
@@ -55,11 +55,11 @@ class QueryListener extends QueryExecutionListener {
         columnLineage ++= traversePlan(child)
 
       case Aggregate(groupingExpressions, aggregateExpressions, child) =>
-        aggregateExpressions.map(getInputColumnsV2).foreach(e => columnLineage ++= e)
+        aggregateExpressions.map(getInputColumns).foreach(e => columnLineage ++= e)
         columnLineage ++= traversePlan(child)
 
       case Project(projectList, child) =>
-        projectList.map(getInputColumnsV2).foreach(e => columnLineage ++= e)
+        projectList.map(getInputColumns).foreach(e => columnLineage ++= e)
         columnLineage ++= traversePlan(child)
 
       case unaryNode: UnaryNode =>
@@ -79,7 +79,7 @@ class QueryListener extends QueryExecutionListener {
     columnLineage
   }
 
-  def getInputColumnsV2(expr: Expression): mutable.Map[String, mutable.Set[String]] = {
+  def getInputColumns(expr: Expression): mutable.Map[String, mutable.Set[String]] = {
     val inputColumns = mutable.Set[String]()
     val columnLineage = mutable.Map[String, mutable.Set[String]]()
 
@@ -88,28 +88,28 @@ class QueryListener extends QueryExecutionListener {
         columnLineage += attr.toString() -> mutable.Set("SOURCE")
 
       case alias: Alias =>
-        inputColumns ++= getInputColumns(alias.child)
+        inputColumns ++= getRootColumns(alias.child)
         columnLineage += alias.name + "#" + alias.exprId.id -> inputColumns
 
       case concat: Concat =>
-        concat.children.map(getInputColumns).foreach(e => inputColumns ++= e)
+        concat.children.map(getRootColumns).foreach(e => inputColumns ++= e)
         columnLineage += concat.toString() -> inputColumns
 
       case aggregate: AggregateExpression =>
-        aggregate.children.map(getInputColumns).foreach(e => inputColumns ++= e)
+        aggregate.children.map(getRootColumns).foreach(e => inputColumns ++= e)
         columnLineage += aggregate.toString() -> inputColumns
 
       case avg: Average =>
-        inputColumns ++= getInputColumns(avg.child)
+        inputColumns ++= getRootColumns(avg.child)
         columnLineage += avg.toString() -> inputColumns
 
       case unaryExpr: UnaryExpression =>
-        inputColumns ++= getInputColumns(unaryExpr.child)
+        inputColumns ++= getRootColumns(unaryExpr.child)
         columnLineage += unaryExpr.toString() -> inputColumns
 
       case binaryExpr: BinaryExpression =>
-        inputColumns ++= getInputColumns(binaryExpr.left)
-        inputColumns ++= getInputColumns(binaryExpr.right)
+        inputColumns ++= getRootColumns(binaryExpr.left)
+        inputColumns ++= getRootColumns(binaryExpr.right)
         columnLineage += binaryExpr.toString() -> inputColumns
 
       case _ => println(expr.getClass)
