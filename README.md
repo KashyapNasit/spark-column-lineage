@@ -8,7 +8,7 @@
 
 👤 **Kashyap Nasit**
 
-* LinkedIn: [@https:\/\/www.linkedin.com\/in\/kashyapnasit\/](https://linkedin.com/in/https:\/\/www.linkedin.com\/in\/kashyapnasit\/)
+* LinkedIn: [@https:\/\/www.linkedin.com\/in\/kashyapnasit\/](https://linkedin.com/in/kashyapnasit)
 
 ## Show your support
 
